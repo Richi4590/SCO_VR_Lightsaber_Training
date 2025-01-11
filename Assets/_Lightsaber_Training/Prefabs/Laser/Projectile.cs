@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class Projectile : MonoBehaviour
@@ -6,10 +7,13 @@ public class Projectile : MonoBehaviour
     public GameObject target = null;
 
     public bool heatSeeking = false;
+    public bool reflected = false;
+    public bool debugRotation = false;
+    public Vector3 rotationOffset = new Vector3(90, 0, 0);
 
     private Rigidbody rb;
 
-    private Vector3 initialVelocityOnShoot = Vector3.zero;
+    private Vector3 currentVelocity = Vector3.zero;
     public float heatSeekingStrength = 1.0f; // Strength of the seeking behavior
 
     private void Awake()
@@ -19,6 +23,16 @@ public class Projectile : MonoBehaviour
 
     private void Update()
     {
+        if (!heatSeeking && (rb.velocity != currentVelocity))
+        {
+            rb.velocity = currentVelocity;
+        }
+
+        if (debugRotation)
+        {
+            ChangeTarget(target);
+        }
+
         if (heatSeeking && target != null)
         {
             Vector3 directionToTarget = (target.transform.position - transform.position).normalized;
@@ -28,12 +42,16 @@ public class Projectile : MonoBehaviour
                 rb.velocity.normalized,
                 directionToTarget,
                 Time.deltaTime * heatSeekingStrength
-            ).normalized * initialVelocityOnShoot.magnitude;
+            ).normalized * currentVelocity.magnitude;
 
             rb.velocity = newVelocity;
 
-            // Optionally, rotate the projectile to face the target
+
             Quaternion targetRotation = Quaternion.LookRotation(newVelocity);
+            Quaternion offsetRotation = Quaternion.Euler(90f, 0f, 0f);  // Add a 90° offset to the X-axis
+            targetRotation *= offsetRotation;
+
+            // Smoothly interpolate to the new rotation
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * heatSeekingStrength);
         }
     }
@@ -42,11 +60,12 @@ public class Projectile : MonoBehaviour
     {
         this.shooter = shooter;
         this.target = target;
-        initialVelocityOnShoot = velocity;
-        rb.velocity = initialVelocityOnShoot;
-        Destroy(this.gameObject, 10f);
-
         ChangeTarget(target);
+
+        currentVelocity = velocity;
+        rb.velocity = currentVelocity;
+        Destroy(this.gameObject, 10f);
+        gameObject.SetActive(true);
     }
 
     public void ChangeTarget(GameObject newTarget)
@@ -54,23 +73,28 @@ public class Projectile : MonoBehaviour
         target = newTarget;
         if (newTarget != null)
         {
-            // Calculate the direction to the target
-            Vector3 directionToTarget = (newTarget.transform.position - transform.position).normalized;
-
-            // Calculate the rotation to align the object's local +Y axis with the target direction
-            Quaternion targetRotation = Quaternion.LookRotation(Vector3.up, directionToTarget);
-
-            // Apply the rotation to the object
-            transform.rotation = targetRotation;
+            // Make the object look at the target
+            transform.LookAt(newTarget.transform.position, Vector3.up);
+            transform.rotation *= Quaternion.Euler(rotationOffset.x, rotationOffset.y, rotationOffset.z);
         }
+    }
+
+    public void SetReflected(Vector3 newVelocity, bool reflected)
+    {
+        currentVelocity = newVelocity;
+        rb.velocity = currentVelocity;
+        this.reflected = reflected;
     }
 
     private void OnCollisionEnter(Collision collision)
     {
         //Debug.Log("COLLIDING!");
 
-        if (collision.transform.tag != "Lightsaber")
+        if (collision.collider.transform.tag != "Lightsaber")
             Destroy(this.gameObject);
-
+        //else
+        //{
+        //    Debug.Log("Lightsaber HIT!");
+        //}
     }
 }

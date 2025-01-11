@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TrainingDrone : MonoBehaviour
@@ -6,27 +7,55 @@ public class TrainingDrone : MonoBehaviour
     public GameObject projectilePrefab; // The projectile to be fired
     public Transform projectileSpawnPoint; // Where the projectile spawns
     public float orbitDistance = 5f; // Distance to maintain from the user
-    public float moveSpeed = 2f; // Speed of the drone's movement
+    public float moveForce = 10f; // Speed of the drone's movement
+    public float beginSlowDownDistance = 0.25f;
     public float minShootInterval = 0.1f; // Time between shots
     public float maxShootInterval = 2f; // Time between shots
-    public float projectileSpeed = 10f; // Speed of the projectile
+    public float minProjectileSpeed = 5f; // Speed of the projectile
+    public float maxProjectileSpeed = 12f; // Speed of the projectile
     public bool orbitMode = true; // If true, the drone orbits; if false, moves within 180° arc
     public float arcWidth = 180f; // Width of the movement arc when not orbiting
+    public float droneHeightOffset = 1;
     public float verticalRange = 2f; // Maximum up/down movement range
-    public float maxStationaryTime = 2f; // Time to stay stationary after reaching a target
+    public float minStationaryTime = 1f; // Time to stay stationary after reaching a target
+    public float maxStationaryTime = 3f; // Time to stay stationary after reaching a target
+
+    public float minOrbitAngleDistance = 5f; // Minimum angular distance between orbit targets
+    public float maxOrbitAngleDistance = 45f; // Maximum angular distance between orbit targets
+    public float directionSwitchInterval = 5f; // Time interval between direction switches
+    private float timeSinceLastSwitch = 0f; // Keeps track of time since the last direction switch
+    private bool clockwise = true; // Keeps track of the current orbit direction
+
     public bool stayStationary = false;
+
+    public List<AudioClip> laserShotSFX;
+    public AudioSource laserShotAudioSource;
+    public AudioSource engineAudioSource; // AudioSource for the drone's engine sound
+    public float pitchMin = 0.8f; // Minimum pitch
+    public float pitchMax = 2f; // Maximum pitch
 
     private float shootTimer;
     private float stationaryTimer = 0f;
     private Vector3 randomTargetPosition;
+    private Vector3 lastPosition;
+    private Rigidbody rb;
+    private float currentOrbitAngle = 0f; // Keeps track of the current orbit angle
 
     private void Start()
     {
         shootTimer = Random.Range(minShootInterval, maxShootInterval); // Initialize the shoot timer
         ChooseRandomTarget(); // Pick the initial random target
+
+        // Ensure the Rigidbody exists
+        rb = GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = gameObject.AddComponent<Rigidbody>();
+        }
+        rb.useGravity = false; // Ensure the drone is not affected by gravity
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (user == null)
         {
@@ -34,9 +63,17 @@ public class TrainingDrone : MonoBehaviour
             return;
         }
 
+        // Always face the user
+        transform.LookAt(user);
+
         if (!stayStationary)
             MoveDrone();
-        
+
+        AdjustEnginePitch();
+    }
+
+    private void Update()
+    {
         HandleShooting();
     }
 
@@ -44,62 +81,176 @@ public class TrainingDrone : MonoBehaviour
     {
         if (orbitMode)
         {
-            // Orbit around the user
+            // Orbit around the user (this will use an arc to move around the user)
             OrbitAroundUser();
         }
         else
         {
-            // Move randomly within a 180° arc with vertical offset
-            MoveRandomlyWithVerticalOffset();
+            // Move within a defined arc in front of the user
+            MoveInArc();
         }
     }
 
     private void OrbitAroundUser()
     {
-        float orbitAngle = Time.time * moveSpeed; // Angle changes over time
-        float radians = Mathf.Deg2Rad * orbitAngle;
-        Vector3 offset = new Vector3(Mathf.Cos(radians), 0, Mathf.Sin(radians)) * orbitDistance;
-        transform.position = user.position + offset;
-        transform.LookAt(user);
+        RotateTowards(randomTargetPosition); // Rotate towards the target position first
+
+        if (Vector3.Distance(transform.position, randomTargetPosition) < 0.2f)
+        {
+            // If the drone is close enough to the target, choose a new target
+            stationaryTimer = Random.Range(minStationaryTime, maxStationaryTime);
+            ChooseRandomTarget(); // Choose a new random target after stationary time
+        }
+        else
+        {
+            ApplyForceTowards(randomTargetPosition); // Then apply force towards the target after rotating
+        }
     }
 
-    private void MoveRandomlyWithVerticalOffset()
+    private void MoveInArc()
     {
-        if (stationaryTimer > 0f)
+        RotateTowards(randomTargetPosition); // Rotate towards the target position first
+
+        if (Vector3.Distance(transform.position, randomTargetPosition) < 0.2f)
         {
-            // Stay stationary for the specified time
-            stationaryTimer -= Time.deltaTime;
+            // If the drone is close enough to the target, choose a new target
+            stationaryTimer = Random.Range(minStationaryTime, maxStationaryTime);
+            ChooseRandomTarget(); // Choose a new random target after stationary time
+        }
+        else
+        {
+            ApplyForceTowards(randomTargetPosition); // Then apply force towards the target after rotating
+        }
+    }
+
+    private void ApplyForceTowards(Vector3 targetPosition)
+    {
+        // Calculate the direction to the target
+        Vector3 direction = targetPosition - transform.position;
+
+        // Get the distance to the target
+        float distance = direction.magnitude;
+
+        // If very close to the target, stop applying force (or you can add more logic here to stop movement)
+        if (distance < 0.2f)
+        {
             return;
         }
 
-        // Move toward the random target
-        transform.position = Vector3.MoveTowards(transform.position, randomTargetPosition, moveSpeed * Time.deltaTime);
+        // Normalize the direction vector
+        Vector3 normalizedDirection = direction.normalized;
 
-        // If the drone reaches the target, stay stationary and pick a new target
-        if (Vector3.Distance(transform.position, randomTargetPosition) < 0.1f)
-        {
-            stationaryTimer = Random.Range(0.1f, maxStationaryTime); // Start the stationary timer
-            ChooseRandomTarget(); // Pick a new random position
-        }
+        // Apply force towards the target position
+        rb.AddForce(normalizedDirection * moveForce, ForceMode.Acceleration); // Use ForceMode.Force for gradual movement
+    }
 
-        // Always face the user
-        transform.LookAt(user);
+    private void RotateTowards(Vector3 targetPosition)
+    {
+        // Calculate direction to target
+        Vector3 direction = targetPosition - transform.position;
+
+        // Calculate the rotation step
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+
+        // Smoothly rotate towards the target position using slerp
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * moveForce);
     }
 
     private void ChooseRandomTarget()
     {
-        // Generate a random horizontal angle within the arc
-        float randomAngle = Random.Range(-arcWidth / 2, arcWidth / 2);
+        if (orbitMode)
+        {
+            // Orbit mode: pick a target position that forms an orbit around the user
+            ChooseOrbitTarget();
+        }
+        else
+        {
+            // Arc mode: pick a random position within an arc in front of the user
+            ChooseArcTarget();
+        }
+    }
 
-        // Generate a random vertical offset
+    private void ChooseOrbitTarget()
+    {
+        // Update time since last direction switch
+        timeSinceLastSwitch += Time.deltaTime;
+
+        // Randomly switch direction at the given interval
+        if (timeSinceLastSwitch >= directionSwitchInterval)
+        {
+            clockwise = Random.value > 0.5f; // Randomly switch direction
+            timeSinceLastSwitch = 0f; // Reset the time counter
+        }
+
+        // Get a random angular distance between min and max
+        float angleDistance = Random.Range(minOrbitAngleDistance, maxOrbitAngleDistance);
+
+        // Update the current orbit angle by adding the random angular distance
+        if (clockwise)
+        {
+            currentOrbitAngle += angleDistance; // Rotate clockwise
+        }
+        else
+        {
+            currentOrbitAngle -= angleDistance; // Rotate counter-clockwise
+        }
+
+        // Ensure the angle wraps around 360°
+        if (currentOrbitAngle >= 360f)
+        {
+            currentOrbitAngle -= 360f;
+        }
+        else if (currentOrbitAngle < 0f)
+        {
+            currentOrbitAngle += 360f;
+        }
+
+        // Convert the angle to radians
+        float radians = Mathf.Deg2Rad * currentOrbitAngle;
+
+        // Generate the orbit position based on the new angle
+        Vector3 offset = new Vector3(Mathf.Cos(radians), 0, Mathf.Sin(radians)) * orbitDistance;
+
+        // Apply vertical offset
         float verticalOffset = Random.Range(-verticalRange, verticalRange);
+        offset.y = droneHeightOffset + verticalOffset;
+
+        // Set the new target position
+        randomTargetPosition = user.position + offset;
+    }
+
+    private void ChooseArcTarget()
+    {
+        // Generate a random horizontal angle within the arc for non-orbit mode
+        float randomAngle = Random.Range(-arcWidth / 2, arcWidth / 2); // Random angle within the arc
+        float verticalOffset = Random.Range(-verticalRange, verticalRange); // Random vertical offset within the range
 
         // Calculate the direction based on the random angle
         Vector3 direction = Quaternion.Euler(0, randomAngle, 0) * user.forward;
 
         // Set the target position with vertical offset at the desired distance
-        randomTargetPosition = user.position + direction.normalized * orbitDistance;
-        randomTargetPosition.y += verticalOffset; // Apply vertical offset
+        randomTargetPosition = (user.position + new Vector3(0, droneHeightOffset, 0)) + direction.normalized * orbitDistance;
+        randomTargetPosition.y += verticalOffset; // Apply the vertical offset
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (randomTargetPosition != null)
+        {
+            // Draw a sphere at the target position
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(randomTargetPosition, 0.01f); // Draw a small sphere at the target position
+
+            // Draw a line from the drone to the target
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(transform.position, randomTargetPosition);
+        }
+
+        if (user == null) return;
+
+        // Rotate the Gizmos to always face the user
+        Quaternion rotation = Quaternion.LookRotation(user.position - transform.position);
+        Gizmos.matrix = Matrix4x4.TRS(transform.position, rotation, Vector3.one);
     }
 
     private void HandleShooting()
@@ -123,11 +274,28 @@ public class TrainingDrone : MonoBehaviour
 
         // Create the projectile
         GameObject projectile = Instantiate(projectilePrefab, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
-
-        Vector3 velocity = projectileSpawnPoint.forward * projectileSpeed;
+        projectile.SetActive(false);
+        Vector3 velocity = projectileSpawnPoint.forward * Random.Range(minProjectileSpeed, maxProjectileSpeed);
         projectile.GetComponent<Projectile>().ShootProjectile(this.gameObject, user.gameObject, velocity);
 
-        //Play Sound...
+        PlayRandomLaserSound();
+    }
 
+    private void PlayRandomLaserSound()
+    {
+        laserShotAudioSource.PlayOneShot(laserShotSFX[Random.Range(0, laserShotSFX.Count)]);
+    }
+
+    private void AdjustEnginePitch()
+    {
+        if (engineAudioSource == null)
+            return;
+
+        // Get the current velocity magnitude
+        float velocityMagnitude = rb.velocity.magnitude;
+
+        // Map velocity to pitch range
+        float pitch = Mathf.Lerp(pitchMin, pitchMax, velocityMagnitude / moveForce);
+        engineAudioSource.pitch = pitch;
     }
 }

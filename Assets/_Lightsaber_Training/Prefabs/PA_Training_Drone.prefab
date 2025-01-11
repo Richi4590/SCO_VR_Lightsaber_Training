@@ -121,7 +121,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   user: {fileID: 0}
-  projectilePrefab: {fileID: 3300150785816028023, guid: be09d3eee2a9ff1438b48bf4fc083956,
+  projectilePrefab: {fileID: 4833666368865710318, guid: 77a686fe0975c264f9657bb2a9d1df2b,
     type: 3}
   projectileSpawnPoint: {fileID: 48524155678825963}
   orbitDistance: 3
@@ -133,3 +133,4 @@ MonoBehaviour:
   arcWidth: 180
   verticalRange: 1
   maxStationaryTime: 1
+  stayStationary: 0

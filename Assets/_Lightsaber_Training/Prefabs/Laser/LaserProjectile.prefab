@@ -31,7 +31,7 @@ Transform:
   m_GameObject: {fileID: 4833666368865710318}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.649, y: 1.487, z: -6.691}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -123,7 +123,10 @@ MonoBehaviour:
   shooter: {fileID: 0}
   target: {fileID: 0}
   heatSeeking: 0
-  heatSeekingStrength: 1
+  reflected: 0
+  debugRotation: 0
+  rotationOffset: {x: 90, y: 0, z: 0}
+  heatSeekingStrength: 3
 --- !u!136 &7082613813346050789
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -143,10 +146,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.0075
-  m_Height: 0.06
+  m_Radius: 0.0125
+  m_Height: 0.08
   m_Direction: 1
-  m_Center: {x: 0, y: 0.175, z: 0}
+  m_Center: {x: 0, y: 0.165, z: 0}
 --- !u!54 &6094706665570229356
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -157,7 +160,7 @@ Rigidbody:
   serializedVersion: 4
   m_Mass: 0.0000001
   m_Drag: 0
-  m_AngularDrag: 0.05
+  m_AngularDrag: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -172,5 +175,5 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 1
+  m_Constraints: 112
+  m_CollisionDetection: 3

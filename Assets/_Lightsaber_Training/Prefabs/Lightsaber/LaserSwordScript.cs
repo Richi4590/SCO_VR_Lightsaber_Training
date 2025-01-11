@@ -2,6 +2,7 @@
 // (c) 2016 Digital Ruby, LLC
 // Refactored for efficiency
 
+using Oculus.Interaction;
 using UnityEngine;
 using VolumetricLines;
 
@@ -63,7 +64,15 @@ namespace DigitalRuby.LaserSword
         [Tooltip("Blade end")]
         public Transform BladeEnd;
 
+        [Tooltip("DistanceHandGrabGameObject")]
+        public GameObject OVRDistanceHandGrabGameObject;
+
         public float initialBladeLightIntensity = 100f;
+
+        public OVRInput.Button activationButton = OVRInput.Button.Two; // Button to activate/deactivate (X Button)
+        private bool isGrabbed = false;
+        private bool isActivated = false;
+        private ObjectGrabbedEventSender grabbedEventSender;
 
         private float bladeHeight;
         private float bladeTime;
@@ -75,6 +84,17 @@ namespace DigitalRuby.LaserSword
 
         private void Awake()
         {
+            // Get the DistanceGrabInteractable component
+            grabbedEventSender = OVRDistanceHandGrabGameObject.GetComponent<ObjectGrabbedEventSender>();
+
+            if (grabbedEventSender != null)
+            {
+                // Subscribe to grab (select) and release (unselect) events
+                grabbedEventSender.OnObjectGrabbed += OnGrabbed;
+                grabbedEventSender.OnObjectReleased += OnReleased;
+            }
+
+
             initialBladeScaleY = BladeSwordMesh.transform.localScale.y;
             // Cache the material for performance
             bladeMaterial = BladeSwordRenderer.material;
@@ -101,11 +121,40 @@ namespace DigitalRuby.LaserSword
             bladeMaterial.SetColor("_Color", BladeColor);
             BladeLaserScript.LineColor = BladeColor;
             // UpdateLaserLength(0f);
-            SetActive(true);
+
+        }
+
+        private void OnDestroy()
+        {
+            /*
+            if (distanceGrabInteractable != null)
+            {
+                // Unsubscribe from events
+                distanceGrabInteractable.WhenSelectInteractor -= OnGrabbed;
+                distanceGrabInteractable.WhenUnselectInteractor -= OnReleased;
+            }
+            */
+        }
+
+        private void OnGrabbed(GameObject source)
+        {
+            isGrabbed = true;
+        }
+
+        private void OnReleased(GameObject source)
+        {
+            isGrabbed = false;
         }
 
         private void Update()
         {
+            // Check if the handle is grabbed and the activation button is pressed
+            if (isGrabbed && OVRInput.GetDown(activationButton))
+            {
+                SetActive(!isActivated);
+                Debug.Log("activated: " + !isActivated);
+            }
+
             if (state == 2 || state == 3)
             {
                 UpdateBladeState();
@@ -127,7 +176,6 @@ namespace DigitalRuby.LaserSword
             Light.intensity = initialBladeLightIntensity * percent;
 
             float currentLaserLineLength = state == 3 ? percent * initialBladeLaserLineLength : (1.0f - percent) * initialBladeLaserLineLength;
-
             // UpdateLaserLength(currentLaserLineLength);
 
             /*
@@ -175,6 +223,7 @@ namespace DigitalRuby.LaserSword
         {
             if (state == 2 || state == 3 || (state == 1 && value) || (state == 0 && !value))
             {
+                isActivated = value;
                 return false; // Invalid state change
             }
 
@@ -202,6 +251,7 @@ namespace DigitalRuby.LaserSword
                 AudioSourceLoop.Stop();
             }
 
+            isActivated = true;
             return true;
         }
 

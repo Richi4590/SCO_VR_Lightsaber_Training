@@ -1,3 +1,4 @@
+using Oculus.Interaction;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,27 +7,31 @@ public class TrainingDrone : MonoBehaviour
     public Transform user; // The user (e.g., VR player or camera)
     public GameObject projectilePrefab; // The projectile to be fired
     public Transform projectileSpawnPoint; // Where the projectile spawns
+    public bool enabled = true;
+    public bool stayStationary = false;
+    public bool orbitMode = true; // If true, the drone orbits; if false, moves within 180° arc
+
     public float orbitDistance = 5f; // Distance to maintain from the user
     public float moveForce = 10f; // Speed of the drone's movement
     public float beginSlowDownDistance = 0.25f;
+    public float startFirstShootingAfterNSeconds = 2f;
     public float minShootInterval = 0.1f; // Time between shots
     public float maxShootInterval = 2f; // Time between shots
     public float minProjectileSpeed = 5f; // Speed of the projectile
     public float maxProjectileSpeed = 12f; // Speed of the projectile
-    public bool orbitMode = true; // If true, the drone orbits; if false, moves within 180° arc
+
     public float arcWidth = 180f; // Width of the movement arc when not orbiting
     public float droneHeightOffset = 1;
     public float verticalRange = 2f; // Maximum up/down movement range
+    public float minDistanceToTriggerTarget = 0.2f;
     public float minStationaryTime = 1f; // Time to stay stationary after reaching a target
     public float maxStationaryTime = 3f; // Time to stay stationary after reaching a target
 
     public float minOrbitAngleDistance = 5f; // Minimum angular distance between orbit targets
     public float maxOrbitAngleDistance = 45f; // Maximum angular distance between orbit targets
-    public float directionSwitchInterval = 5f; // Time interval between direction switches
-    private float timeSinceLastSwitch = 0f; // Keeps track of time since the last direction switch
+    public float directionSwitchInterval = 2.5f; // Time interval between direction switches
+    public float timeSinceLastSwitch = 0f; // Keeps track of time since the last direction switch
     private bool clockwise = true; // Keeps track of the current orbit direction
-
-    public bool stayStationary = false;
 
     public List<AudioClip> laserShotSFX;
     public AudioSource laserShotAudioSource;
@@ -36,45 +41,93 @@ public class TrainingDrone : MonoBehaviour
 
     private float shootTimer;
     private float stationaryTimer = 0f;
+    private bool gracePeriodOver = false;
+    private float initialShootingTimer = 0f;
     private Vector3 randomTargetPosition;
     private Vector3 lastPosition;
     private Rigidbody rb;
-    private float currentOrbitAngle = 0f; // Keeps track of the current orbit angle
+    private float currentOrbitAngle = 180f; // Keeps track of the current orbit angle
+    private bool reachedTarget = false;
+
 
     private void Start()
     {
-        shootTimer = Random.Range(minShootInterval, maxShootInterval); // Initialize the shoot timer
+        InitDrone();
         ChooseRandomTarget(); // Pick the initial random target
 
         // Ensure the Rigidbody exists
         rb = GetComponent<Rigidbody>();
-        if (rb == null)
-        {
-            rb = gameObject.AddComponent<Rigidbody>();
-        }
-        rb.useGravity = false; // Ensure the drone is not affected by gravity
-    }
+        
+        rb.useGravity = false;
 
-    private void FixedUpdate()
-    {
+        EnableDrone(false);
+        GameManager.Instance().OnGameStart += () => EnableDrone(true);
+        GameManager.Instance().OnGameStop += () => EnableDrone(false);
+
         if (user == null)
         {
             Debug.LogError("User is not assigned to the drone!");
             return;
         }
+    }
 
-        // Always face the user
-        transform.LookAt(user);
+    private void FixedUpdate()
+    {
+        if (enabled)
+        {
+            if (!stayStationary)
+                MoveDrone();
+        }
 
-        if (!stayStationary)
-            MoveDrone();
-
-        AdjustEnginePitch();
     }
 
     private void Update()
     {
-        HandleShooting();
+        if (enabled)
+        {
+
+            // Update time since last direction switch
+            shootTimer -= Time.deltaTime;
+            timeSinceLastSwitch += Time.deltaTime;
+
+            if (reachedTarget)
+                stationaryTimer -= Time.deltaTime;
+
+            //Debug.Log(stationaryTimer);
+
+            if (!gracePeriodOver)
+            {
+                initialShootingTimer += Time.deltaTime;
+
+                if (initialShootingTimer > startFirstShootingAfterNSeconds)
+                    gracePeriodOver = true;
+            }
+
+            transform.LookAt(user); // Always face the user
+
+            HandleShooting();
+            AdjustEnginePitch();
+
+        }
+    }
+
+    public void EnableDrone(bool state)
+    {
+        InitDrone();
+        this.enabled = state;
+    }
+
+    public void EnableDisableDrone()
+    {
+        this.enabled = !this.enabled;
+    }
+
+    private void InitDrone()
+    {
+        shootTimer = Random.Range(minShootInterval, maxShootInterval);
+        stationaryTimer = 0;
+        gracePeriodOver = false;
+        initialShootingTimer = 0;
     }
 
     private void MoveDrone()
@@ -95,11 +148,16 @@ public class TrainingDrone : MonoBehaviour
     {
         RotateTowards(randomTargetPosition); // Rotate towards the target position first
 
-        if (Vector3.Distance(transform.position, randomTargetPosition) < 0.2f)
+        if (Vector3.Distance(transform.position, randomTargetPosition) < minDistanceToTriggerTarget)
         {
-            // If the drone is close enough to the target, choose a new target
-            stationaryTimer = Random.Range(minStationaryTime, maxStationaryTime);
-            ChooseRandomTarget(); // Choose a new random target after stationary time
+            reachedTarget = true;
+
+            if (stationaryTimer <= 0f)
+            {
+                // If the drone is close enough to the target, choose a new target
+                stationaryTimer = Random.Range(minStationaryTime, maxStationaryTime);
+                ChooseRandomTarget(); // Choose a new random target after stationary time
+            }
         }
         else
         {
@@ -111,11 +169,16 @@ public class TrainingDrone : MonoBehaviour
     {
         RotateTowards(randomTargetPosition); // Rotate towards the target position first
 
-        if (Vector3.Distance(transform.position, randomTargetPosition) < 0.2f)
+        if (Vector3.Distance(transform.position, randomTargetPosition) < minDistanceToTriggerTarget)
         {
-            // If the drone is close enough to the target, choose a new target
-            stationaryTimer = Random.Range(minStationaryTime, maxStationaryTime);
-            ChooseRandomTarget(); // Choose a new random target after stationary time
+            reachedTarget = true;
+
+            if (stationaryTimer <= 0f)
+            {
+                // If the drone is close enough to the target, choose a new target
+                stationaryTimer = Random.Range(minStationaryTime, maxStationaryTime);
+                ChooseRandomTarget(); // Choose a new random target after stationary time
+            }
         }
         else
         {
@@ -132,7 +195,7 @@ public class TrainingDrone : MonoBehaviour
         float distance = direction.magnitude;
 
         // If very close to the target, stop applying force (or you can add more logic here to stop movement)
-        if (distance < 0.2f)
+        if (distance < minDistanceToTriggerTarget)
         {
             return;
         }
@@ -153,7 +216,7 @@ public class TrainingDrone : MonoBehaviour
         Quaternion targetRotation = Quaternion.LookRotation(direction);
 
         // Smoothly rotate towards the target position using slerp
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * moveForce);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * moveForce);
     }
 
     private void ChooseRandomTarget()
@@ -168,13 +231,12 @@ public class TrainingDrone : MonoBehaviour
             // Arc mode: pick a random position within an arc in front of the user
             ChooseArcTarget();
         }
+
+        reachedTarget = false;
     }
 
     private void ChooseOrbitTarget()
     {
-        // Update time since last direction switch
-        timeSinceLastSwitch += Time.deltaTime;
-
         // Randomly switch direction at the given interval
         if (timeSinceLastSwitch >= directionSwitchInterval)
         {
@@ -255,12 +317,13 @@ public class TrainingDrone : MonoBehaviour
 
     private void HandleShooting()
     {
-        shootTimer -= Time.deltaTime;
-
-        if (shootTimer <= 0f)
+        if (gracePeriodOver)
         {
-            ShootProjectile();
-            shootTimer = Random.Range(minShootInterval, maxShootInterval); // Reset the shoot timer
+            if (shootTimer <= 0f)
+            {
+                ShootProjectile();
+                shootTimer = Random.Range(minShootInterval, maxShootInterval); // Reset the shoot timer
+            }
         }
     }
 

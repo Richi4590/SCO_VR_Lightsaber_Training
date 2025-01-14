@@ -1,7 +1,7 @@
-using UnityEngine;
 using Oculus.Interaction;
+using UnityEngine;
 
-public class ObjectGrabbedEventSender : GrabFreeTransformer, ITransformer
+public class ObjectGrabbedEventSender : MonoBehaviour
 {
     public delegate void ObjectGrabbed(GameObject source);
     public event ObjectGrabbed OnObjectGrabbed;
@@ -10,26 +10,51 @@ public class ObjectGrabbedEventSender : GrabFreeTransformer, ITransformer
     public delegate void ObjectReleased(GameObject source);
     public event ObjectReleased OnObjectReleased;
 
-    public new void Initialize(IGrabbable grabbable)
+    public Rigidbody _rigidbody;
+    private Grabbable _grabbable;
+
+    private void Awake()
     {
-        base.Initialize(grabbable);
+        _grabbable = GetComponent<Grabbable>();
+
+        if (_grabbable == null)
+        {
+            Debug.LogError("Grabbable is missing! This script requires a Grabbable component.");
+        }
     }
-    public new void BeginTransform()
+
+    private void OnEnable()
     {
-        base.BeginTransform();
+        // Subscribe to Grabbable events
+        _grabbable.WhenPointerEventRaised += HandlePointerEvent;
+    }
+
+    private void OnDisable()
+    {
+        // Unsubscribe from Grabbable events
+        _grabbable.WhenPointerEventRaised -= HandlePointerEvent;
+    }
+
+    private void HandlePointerEvent(PointerEvent pointerEvent)
+    {
+        switch (pointerEvent.Type)
+        {
+            case PointerEventType.Select:
+                HandleGrab();
+                break;
+            case PointerEventType.Unselect:
+                HandleRelease();
+                break;
+        }
+    }
+
+    private void HandleGrab()
+    {
         OnObjectGrabbed?.Invoke(gameObject);
     }
 
-    public new void UpdateTransform()
+    private void HandleRelease()
     {
-        base.UpdateTransform();
-        OnObjectMoved?.Invoke(gameObject);
-    }
-
-    public new void EndTransform()
-    {
-        //Parent class does nothing with that method so no need to call it
         OnObjectReleased?.Invoke(gameObject);
     }
-
 }

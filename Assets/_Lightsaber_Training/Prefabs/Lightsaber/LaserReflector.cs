@@ -5,6 +5,8 @@ using UnityEngine;
 public class LaserReflector : MonoBehaviour
 {
     public float reflectionForceMultiplier = 1.0f; // Multiplier for reflected laser speed
+    public AudioSource deflectionAudioSource;
+    public List<AudioClip> laserDeflectionSFX;
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -13,6 +15,8 @@ public class LaserReflector : MonoBehaviour
         if (laser != null)
         {
             Reflect(collision, laser);
+            GameManager.Instance().ProjectileParried();
+            PlayRandomDeflectionSound();
         }
     }
 
@@ -48,5 +52,11 @@ public class LaserReflector : MonoBehaviour
             // Debugging: Visualize the reflection
             Debug.DrawRay(contact.point, reflectedDirection, Color.blue, 2.0f);
         }
+    }
+
+    private void PlayRandomDeflectionSound()
+    {
+        deflectionAudioSource.pitch = Random.Range(0.9f, 1.2f);
+        deflectionAudioSource.PlayOneShot(laserDeflectionSFX[Random.Range(0, laserDeflectionSFX.Count)]);
     }
 }

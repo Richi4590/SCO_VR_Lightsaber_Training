@@ -81,6 +81,7 @@ namespace DigitalRuby.LaserSword
         private float bladeDir; // 1 = up, -1 = down
         private Material bladeMaterial;
         private float initialBladeScaleY, initialBladeLaserLineLength;
+        private Rigidbody rb;
 
         private void Awake()
         {
@@ -94,6 +95,7 @@ namespace DigitalRuby.LaserSword
                 grabbedEventSender.OnObjectReleased += OnReleased;
             }
 
+            rb = GetComponent<Rigidbody>();
 
             initialBladeScaleY = BladeSwordMesh.transform.localScale.y;
             // Cache the material for performance
@@ -143,6 +145,13 @@ namespace DigitalRuby.LaserSword
 
         private void OnReleased(GameObject source)
         {
+            
+            if (rb.isKinematic)
+            {
+                rb.isKinematic = false;
+            }
+            
+
             isGrabbed = false;
         }
 

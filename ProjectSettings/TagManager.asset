@@ -5,11 +5,30 @@ TagManager:
   serializedVersion: 2
   tags:
   - Lightsaber
+  - QDSUIToggleButton
+  - QDSUIIcon
+  - QDSUITextSecondaryColor
+  - QDSUIToggleBorderlessButton
+  - QDSUITooltip
+  - QDSUISecondaryButton
+  - QDSUIBorderlessButton
+  - QDSUISharedThemeColor
+  - QDSUIAccentColor
+  - QDSUIToggleSwitch
+  - QDSUIToggleCheckboxRadio
+  - QDSUISection
+  - SamplesInfoPanel
+  - Locomotion
+  - PassThrough
+  - PassThroughButton
+  - LocoButton
+  - LocoText
+  - Laser
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Lightsaber
   - Water
   - UI
   - 

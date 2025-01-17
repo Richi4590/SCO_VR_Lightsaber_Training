@@ -7,6 +7,7 @@ public class LaserReflector : MonoBehaviour
     public float reflectionForceMultiplier = 1.0f; // Multiplier for reflected laser speed
     public AudioSource deflectionAudioSource;
     public List<AudioClip> laserDeflectionSFX;
+    public List<GameObject> sparksSFX;
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -17,7 +18,34 @@ public class LaserReflector : MonoBehaviour
             Reflect(collision, laser);
             GameManager.Instance().ProjectileParried();
             PlayRandomDeflectionSound();
+            InstantiateSpark(collision.GetContact(0));
         }
+    }
+
+    private void InstantiateSpark(ContactPoint contact)
+    {
+        GameObject sparkSFX = Instantiate(sparksSFX[Random.Range(0, sparksSFX.Count)], contact.point, Quaternion.LookRotation(contact.normal));
+
+        float longestWaitingTime = 0;
+
+        int timesSmaller = 10;
+        sparkSFX.transform.localScale = sparkSFX.transform.localScale / timesSmaller;
+
+        longestWaitingTime = sparkSFX.GetComponent<ParticleSystem>().main.duration;
+
+        //Make all sub sfx the same size
+        for (int i = 0; i < sparkSFX.transform.childCount; i++)
+        {
+            GameObject child = sparkSFX.transform.GetChild(i).gameObject;
+            child.transform.localScale = sparkSFX.transform.localScale / timesSmaller;
+
+            if (child.GetComponent<ParticleSystem>().main.duration > longestWaitingTime)
+                longestWaitingTime = child.GetComponent<ParticleSystem>().main.duration;
+        }
+
+        //Debug.Log("Longest Particle duration of: " + longestWaitingTime);
+
+        Destroy(sparkSFX, longestWaitingTime);
     }
 
     private void Reflect(Collision collision, Projectile laser)

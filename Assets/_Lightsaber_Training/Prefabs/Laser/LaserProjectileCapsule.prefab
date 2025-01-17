@@ -13,10 +13,10 @@ GameObject:
   - component: {fileID: 2867464484535240609}
   - component: {fileID: 2899518703541723164}
   - component: {fileID: 128159213368683200}
-  - component: {fileID: 7082613813346050789}
   - component: {fileID: 6094706665570229356}
+  - component: {fileID: 8558030087307523308}
   m_Layer: 0
-  m_Name: LaserProjectile
+  m_Name: LaserProjectileCapsule
   m_TagString: Laser
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -126,30 +126,14 @@ MonoBehaviour:
   reflected: 0
   debugRotation: 0
   rotationOffset: {x: 90, y: 0, z: 0}
+  sparksPrefabs:
+  - {fileID: 4212237911574779972, guid: f34d53a9f8cd409428b8d1e3addf4807, type: 3}
+  - {fileID: 1855340746554395461, guid: 49011e57640af4346b984abcfb1cf581, type: 3}
+  - {fileID: 5585671604984661021, guid: c8024b1c8dba5ac45ac354c95aaf3221, type: 3}
+  bulletHoleDecals:
+  - {fileID: 2359805103727875871, guid: d4b910e9140cdf743b247b98ab543933, type: 3}
+  - {fileID: 2359805103727875871, guid: d653864b5b0491c46a91b94386ba24c9, type: 3}
   heatSeekingStrength: 3
---- !u!136 &7082613813346050789
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4833666368865710318}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.0125
-  m_Height: 0.08
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.165, z: 0}
 --- !u!54 &6094706665570229356
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -176,4 +160,27 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 112
-  m_CollisionDetection: 3
+  m_CollisionDetection: 1
+--- !u!136 &8558030087307523308
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4833666368865710318}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.01
+  m_Height: 0.1
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.157, z: 0}

@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/_Lightsaber_Training/Map/Lightsaber_Training_VR.unity
+    guid: 9ae011476f8430d4abaaa2edc7a51f85
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 39a6bb9f50e1fd24e9514770d0e06126,
       type: 2}

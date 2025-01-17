@@ -1,4 +1,7 @@
+using NUnit.Framework;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class Projectile : MonoBehaviour
@@ -10,6 +13,9 @@ public class Projectile : MonoBehaviour
     public bool reflected = false;
     public bool debugRotation = false;
     public Vector3 rotationOffset = new Vector3(90, 0, 0);
+
+    public List<GameObject> sparksPrefabs;
+    public List<GameObject> bulletHoleDecals;
 
     private Rigidbody rb;
 
@@ -86,12 +92,65 @@ public class Projectile : MonoBehaviour
         this.reflected = reflected;
     }
 
+    private void InstantiateSpark(ContactPoint contact)
+    {
+        GameObject sparkSFX = Instantiate(sparksPrefabs[Random.Range(0, sparksPrefabs.Count)], contact.point, Quaternion.LookRotation(contact.normal));
+
+        float longestWaitingTime = 0;
+
+        int timesSmaller = 10;
+        sparkSFX.transform.localScale = sparkSFX.transform.localScale / timesSmaller;
+
+        longestWaitingTime = sparkSFX.GetComponent<ParticleSystem>().main.duration;
+
+        //Make all sub sfx the same size
+        for (int i = 0; i < sparkSFX.transform.childCount; i++)
+        {
+            GameObject child = sparkSFX.transform.GetChild(i).gameObject;
+            child.transform.localScale = sparkSFX.transform.localScale / timesSmaller;
+
+            if (child.GetComponent<ParticleSystem>().main.duration > longestWaitingTime)
+                longestWaitingTime = child.GetComponent<ParticleSystem>().main.duration;
+        }
+
+        //Debug.Log("Longest Particle duration of: " + longestWaitingTime);
+
+        Destroy(sparkSFX, longestWaitingTime);
+    }
+
+    private void InstantiateDecal(ContactPoint contact)
+    {
+        GameObject bulletDecal = Instantiate(
+            bulletHoleDecals[Random.Range(0, bulletHoleDecals.Count)],
+            contact.point,
+            Quaternion.LookRotation(contact.normal) // Align rotation to surface normal
+        );
+
+        //Debug.DrawRay(contact.point, contact.normal, Color.red, 5f);
+        //Debug.Log($"Contact Point: {contact.point}, Normal: {contact.normal}");
+
+        Destroy(bulletDecal, 10);
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         //Debug.Log("COLLIDING!");
 
+        Debug.Log(collision.collider.gameObject.name);
+
         if (collision.collider.transform.tag != "Lightsaber")
+        {
+            if (collision.collider.transform.tag != "Player")
+            {
+                // Get the contact point and normal of the collision
+                ContactPoint contact = collision.GetContact(0);
+
+                InstantiateSpark(contact);
+                InstantiateDecal(contact);
+            }
+
             Destroy(this.gameObject);
+        }
         //else
         //{
         //    Debug.Log("Lightsaber HIT!");

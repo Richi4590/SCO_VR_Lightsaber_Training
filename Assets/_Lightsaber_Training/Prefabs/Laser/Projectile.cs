@@ -13,14 +13,16 @@ public class Projectile : MonoBehaviour
     public bool reflected = false;
     public bool debugRotation = false;
     public Vector3 rotationOffset = new Vector3(90, 0, 0);
+    public float reflectionForceMultiplier = 1.0f; // Multiplier for reflected laser speed
+    public float heatSeekingStrength = 1.0f; // Strength of the seeking behavior
 
     public List<GameObject> sparksPrefabs;
     public List<GameObject> bulletHoleDecals;
+    public List<AudioClip> laserDeflectionSFX;
 
     private Rigidbody rb;
-
     private Vector3 currentVelocity = Vector3.zero;
-    public float heatSeekingStrength = 1.0f; // Strength of the seeking behavior
+    private bool applyFinalVelocity = false;
 
     private void Awake()
     {
@@ -29,10 +31,6 @@ public class Projectile : MonoBehaviour
 
     private void Update()
     {
-        if (!heatSeeking && (rb.velocity != currentVelocity))
-        {
-            rb.velocity = currentVelocity;
-        }
 
         if (debugRotation)
         {
@@ -62,6 +60,15 @@ public class Projectile : MonoBehaviour
         }
     }
 
+    private void FixedUpdate()
+    {
+        if (applyFinalVelocity)
+        {
+            rb.velocity = currentVelocity;
+            applyFinalVelocity = false; // Reset after applying
+        }
+    }
+
     public void ShootProjectile(GameObject shooter, GameObject target, Vector3 velocity)
     {
         this.shooter = shooter;
@@ -88,8 +95,72 @@ public class Projectile : MonoBehaviour
     public void SetReflected(Vector3 newVelocity, bool reflected)
     {
         currentVelocity = newVelocity;
-        rb.velocity = currentVelocity;
+        applyFinalVelocity = true;
         this.reflected = reflected;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        //Debug.Log(collision.collider.transform.tag);
+
+        if (collision.collider.transform.tag != "Lightsaber")
+        {
+            if (collision.collider.transform.tag != "Player")
+            {
+                // Get the contact point and normal of the collision
+                ContactPoint contact = collision.GetContact(0);
+
+                InstantiateSpark(contact);
+                InstantiateDecal(contact);
+            }
+            Destroy(this.gameObject);
+            return;
+        }
+
+        //Lightsaber Blade Hit!
+        Reflect(collision);
+
+    }
+
+    public void Reflect(Collision bladeCollision)
+    {
+        GameManager.Instance().ProjectileParried();
+        PlayRandomDeflectionSound(bladeCollision.collider.GetComponent<AudioSource>());
+        InstantiateSpark(bladeCollision.GetContact(0));
+
+        // Prevent angular motion
+        rb.angularVelocity = Vector3.zero;
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
+
+        // Capture the velocity before Unity modifies it
+        Vector3 incomingVelocity = currentVelocity;
+        float incomingSpeed = incomingVelocity.magnitude; // Preserve the speed
+
+        // Get the contact point and normal
+        ContactPoint contact = bladeCollision.GetContact(0);
+        Vector3 hitNormal = contact.normal;
+
+        // Calculate the reflection direction
+        Vector3 reflectedDirection = Vector3.Reflect(incomingVelocity.normalized, hitNormal);
+
+        // Align the projectile's rotation with the reflected velocity
+        Quaternion targetRotation = Quaternion.LookRotation(reflectedDirection);
+        transform.rotation = targetRotation * Quaternion.Euler(90, 0, 0);
+
+        // Calculate the new velocity while preserving speed
+        Vector3 velocityAfterReflection = reflectedDirection * incomingSpeed * reflectionForceMultiplier;
+
+        // Mark the laser as reflected
+        SetReflected(velocityAfterReflection, true);
+        // Debugging: Visualize the reflection
+        Debug.DrawRay(contact.point, reflectedDirection, Color.blue, 2.0f);
+        
+    }
+
+    private void PlayRandomDeflectionSound(AudioSource deflectionAudioSource)
+    {
+        deflectionAudioSource.pitch = Random.Range(0.9f, 1.2f);
+        deflectionAudioSource.PlayOneShot(laserDeflectionSFX[Random.Range(0, laserDeflectionSFX.Count)]);
     }
 
     private void InstantiateSpark(ContactPoint contact)
@@ -130,30 +201,5 @@ public class Projectile : MonoBehaviour
         //Debug.Log($"Contact Point: {contact.point}, Normal: {contact.normal}");
 
         Destroy(bulletDecal, 10);
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        //Debug.Log("COLLIDING!");
-
-        Debug.Log(collision.collider.gameObject.name);
-
-        if (collision.collider.transform.tag != "Lightsaber")
-        {
-            if (collision.collider.transform.tag != "Player")
-            {
-                // Get the contact point and normal of the collision
-                ContactPoint contact = collision.GetContact(0);
-
-                InstantiateSpark(contact);
-                InstantiateDecal(contact);
-            }
-
-            Destroy(this.gameObject);
-        }
-        //else
-        //{
-        //    Debug.Log("Lightsaber HIT!");
-        //}
     }
 }

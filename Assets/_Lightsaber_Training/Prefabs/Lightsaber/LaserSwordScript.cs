@@ -70,6 +70,8 @@ namespace DigitalRuby.LaserSword
         public float initialBladeLightIntensity = 100f;
 
         public OVRInput.Button activationButton = OVRInput.Button.Two; // Button to activate/deactivate (X Button)
+        public bool turnOn = false;
+
         private bool isGrabbed = false;
         private bool isActivated = false;
         private ObjectGrabbedEventSender grabbedEventSender;
@@ -157,6 +159,17 @@ namespace DigitalRuby.LaserSword
 
         private void Update()
         {
+            if (turnOn && !isActivated)
+            {
+                GameManager.Instance().StartGame();
+                Activate();
+            }
+
+            if (!turnOn && isActivated)
+            {
+                Deactivate();
+            }
+
             // Check if the handle is grabbed and the activation button is pressed
             if (isGrabbed && OVRInput.GetDown(activationButton))
             {
@@ -168,11 +181,6 @@ namespace DigitalRuby.LaserSword
             {
                 UpdateBladeState();
             }
-
-            if (state == 1) // When fully on, set light to max
-            {
-                Light.intensity = initialBladeLightIntensity;
-            }
         }
 
         private void UpdateBladeState()
@@ -182,29 +190,20 @@ namespace DigitalRuby.LaserSword
 
             // Scale Y from 0 to the initial value during activation or vice versa during deactivation
             float currentScaleY = state == 3 ? percent * initialBladeScaleY : (1.0f - percent) * initialBladeScaleY;
-            Light.intensity = initialBladeLightIntensity * percent;
+            Light.intensity = state == 3 ? initialBladeLightIntensity * percent : ((1.0f - percent) * initialBladeLightIntensity);
 
-            float currentLaserLineLength = state == 3 ? percent * initialBladeLaserLineLength : (1.0f - percent) * initialBladeLaserLineLength;
-            // UpdateLaserLength(currentLaserLineLength);
-
-            /*
-            BladeSwordRenderer.transform.localScale = new Vector3(
-                BladeSwordRenderer.transform.localScale.x,
-                currentScaleY,
-                BladeSwordRenderer.transform.localScale.z
-            );
-
-            // Activate or deactivate visuals based on scale
-            BladeSwordRenderer.gameObject.SetActive(currentScaleY > 0.01f);
-
-            */
             UpdateBladeScale(currentScaleY);
-
 
 
             if (bladeTime >= ActivationTime)
             {
                 state = state == 3 ? 1 : 0; // Set final state (1 = on, 0 = off)
+
+                if (state == 1) // When fully on, set light to max
+                    Light.intensity = initialBladeLightIntensity;
+                else
+                    Light.intensity = 0;
+
                 bladeTime = 0f;
 
                 if (temporaryBladeStart != null)

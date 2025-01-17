@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 128159213368683200}
   - component: {fileID: 6094706665570229356}
   - component: {fileID: 8558030087307523308}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: LaserProjectileCapsule
   m_TagString: Laser
   m_Icon: {fileID: 0}
@@ -126,6 +126,8 @@ MonoBehaviour:
   reflected: 0
   debugRotation: 0
   rotationOffset: {x: 90, y: 0, z: 0}
+  reflectionForceMultiplier: 1
+  heatSeekingStrength: 3
   sparksPrefabs:
   - {fileID: 4212237911574779972, guid: f34d53a9f8cd409428b8d1e3addf4807, type: 3}
   - {fileID: 1855340746554395461, guid: 49011e57640af4346b984abcfb1cf581, type: 3}
@@ -133,7 +135,10 @@ MonoBehaviour:
   bulletHoleDecals:
   - {fileID: 2359805103727875871, guid: d4b910e9140cdf743b247b98ab543933, type: 3}
   - {fileID: 2359805103727875871, guid: d653864b5b0491c46a91b94386ba24c9, type: 3}
-  heatSeekingStrength: 3
+  laserDeflectionSFX:
+  - {fileID: 8300000, guid: 45af68a840ebd9943970c5ae2ec24c97, type: 3}
+  - {fileID: 8300000, guid: 740d16f77e9f5dd42ad40fd9111c23a6, type: 3}
+  - {fileID: 8300000, guid: ea81443918fb6ff429181a1ccd82ea7d, type: 3}
 --- !u!54 &6094706665570229356
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -153,14 +158,14 @@ Rigidbody:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 112
-  m_CollisionDetection: 1
+  m_CollisionDetection: 2
 --- !u!136 &8558030087307523308
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -174,13 +179,13 @@ CapsuleCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.01
-  m_Height: 0.1
+  m_Radius: 0.03
+  m_Height: 0.2
   m_Direction: 1
-  m_Center: {x: 0, y: 0.157, z: 0}
+  m_Center: {x: 0, y: 0.105, z: 0}

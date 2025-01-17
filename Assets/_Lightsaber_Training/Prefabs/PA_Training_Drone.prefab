@@ -492,15 +492,17 @@ MonoBehaviour:
   projectilePrefab: {fileID: 4833666368865710318, guid: 77a686fe0975c264f9657bb2a9d1df2b,
     type: 3}
   projectileSpawnPoint: {fileID: 7570975761334447317}
+  enabled: 1
+  stayStationary: 0
+  orbitMode: 1
   orbitDistance: 5
   moveForce: 5
   beginSlowDownDistance: 0.25
-  startFirstShootingAfterNSeconds: 5
+  startFirstShootingAfterNSeconds: 4
   minShootInterval: 0.5
   maxShootInterval: 3
-  minProjectileSpeed: 5
+  minProjectileSpeed: 6
   maxProjectileSpeed: 12
-  orbitMode: 1
   arcWidth: 45
   droneHeightOffset: 0.5
   verticalRange: 0.25
@@ -511,7 +513,6 @@ MonoBehaviour:
   maxOrbitAngleDistance: 60
   directionSwitchInterval: 2.5
   timeSinceLastSwitch: 0
-  stayStationary: 0
   laserShotSFX:
   - {fileID: 8300000, guid: de812cfb519929c4aad9d296f655c81d, type: 3}
   - {fileID: 8300000, guid: 60a0682fbc82bd244bdae3f3445cfd17, type: 3}

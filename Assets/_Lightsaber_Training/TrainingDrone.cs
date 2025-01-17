@@ -49,9 +49,16 @@ public class TrainingDrone : MonoBehaviour
     private float currentOrbitAngle = 180f; // Keeps track of the current orbit angle
     private bool reachedTarget = false;
 
+    private float initialMoveForce;
+    private float initialMinShootInterval;
+    private float initialMaxShootInterval;
 
     private void Start()
     {
+        initialMoveForce = moveForce;
+        initialMinShootInterval = minShootInterval;
+        initialMaxShootInterval = maxShootInterval;
+
         InitDrone();
         ChooseRandomTarget(); // Pick the initial random target
 
@@ -122,8 +129,19 @@ public class TrainingDrone : MonoBehaviour
         this.enabled = !this.enabled;
     }
 
+    public void SetToChaoticDroneMode() 
+    {
+        moveForce = initialMoveForce * 2;
+        minShootInterval = initialMinShootInterval * 0.25f;
+        maxShootInterval = initialMaxShootInterval * 0.25f;
+    }
+
     private void InitDrone()
     {
+        moveForce = initialMoveForce;
+        minShootInterval = initialMinShootInterval;
+        maxShootInterval = initialMaxShootInterval;
+
         shootTimer = Random.Range(minShootInterval, maxShootInterval);
         stationaryTimer = 0;
         gracePeriodOver = false;

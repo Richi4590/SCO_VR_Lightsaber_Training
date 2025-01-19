@@ -6,9 +6,6 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public TextMeshProUGUI droneActivationStatusText;
-    public TextMeshProUGUI parriedShotsNumberText;
-    public TextMeshProUGUI lifesLeftNumberText;
     public AudioSource backgroundMusicAudioSource;
     public AudioClip normalAmbienceMusic;
     public AudioClip parryingAmbienceMusic;
@@ -17,6 +14,10 @@ public class GameManager : MonoBehaviour
 
     public event Action OnGameStart;
     public event Action OnGameStop;
+
+    public event Action<bool> OnDroneActivation;
+    public event Action<int> OnParriedShot;
+    public event Action<int> OnLifesLeft;
 
     private static GameManager instance;
     private int lifes = 3;
@@ -68,13 +69,13 @@ public class GameManager : MonoBehaviour
     public void ProjectileParried()
     {
         parriedShots++;
-        parriedShotsNumberText.text = parriedShots.ToString();
+        OnParriedShot.Invoke(parriedShots);
     }
 
     public void PlayerHit()
     {
         lifes--;
-        lifesLeftNumberText.text = lifes.ToString();
+        OnLifesLeft.Invoke(lifes);
 
         if (lifes <= 0) 
             StopGame();
@@ -89,9 +90,10 @@ public class GameManager : MonoBehaviour
         backgroundMusicAudioSource.PlayOneShot(parryingAmbienceMusic);
         parriedShots = 0;
         lifes = initialLifes;
-        droneActivationStatusText.text = "True";
-        parriedShotsNumberText.text = "0";
-        lifesLeftNumberText.text = lifes.ToString();
+
+        OnDroneActivation.Invoke(true);
+        OnParriedShot.Invoke(parriedShots);
+        OnLifesLeft.Invoke(lifes);
     }
 
     private void _OnGameStop()
@@ -99,7 +101,7 @@ public class GameManager : MonoBehaviour
         gameStarted = false;
         backgroundMusicAudioSource.Stop();
         backgroundMusicAudioSource.PlayOneShot(normalAmbienceMusic);
-        droneActivationStatusText.text = "False";
+        OnDroneActivation.Invoke(false);
     }
 
 }

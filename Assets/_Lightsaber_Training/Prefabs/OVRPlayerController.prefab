@@ -64,7 +64,8 @@ PrefabInstance:
       value: === XR Camera Rig ===
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 881287594118802538, guid: e5b642895c78cf44fa2b3e912ac1a9a5, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e5b642895c78cf44fa2b3e912ac1a9a5, type: 3}

@@ -8,6 +8,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Lightsaber_Training/Map/Lightsaber_Training_VR.unity
     guid: 9ae011476f8430d4abaaa2edc7a51f85
+  - enabled: 1
+    path: Assets/_Lightsaber_Training/Map/Lightsaber_Training_AR.unity
+    guid: 94b9fa6bbb80d6342842629a10521fc0
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 39a6bb9f50e1fd24e9514770d0e06126,
       type: 2}

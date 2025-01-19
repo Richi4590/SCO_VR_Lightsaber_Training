@@ -489,34 +489,34 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   user: {fileID: 0}
-  projectilePrefab: {fileID: 4833666368865710318, guid: 77a686fe0975c264f9657bb2a9d1df2b,
+  projectilePrefab: {fileID: 4833666368865710318, guid: 7831b21d84063df498d8f617dd1c89a5,
     type: 3}
   projectileSpawnPoint: {fileID: 7570975761334447317}
-  enabled: 1
-  stayStationary: 0
-  orbitMode: 1
-  orbitDistance: 5
-  moveForce: 5
-  beginSlowDownDistance: 0.25
-  startFirstShootingAfterNSeconds: 4
-  minShootInterval: 0.5
-  maxShootInterval: 3
-  minProjectileSpeed: 6
-  maxProjectileSpeed: 12
-  arcWidth: 45
-  droneHeightOffset: 0.5
-  verticalRange: 0.25
-  minDistanceToTriggerTarget: 0.2
-  minStationaryTime: 0.5
-  maxStationaryTime: 3
-  minOrbitAngleDistance: 5
-  maxOrbitAngleDistance: 60
-  directionSwitchInterval: 2.5
-  timeSinceLastSwitch: 0
   laserShotSFX:
   - {fileID: 8300000, guid: de812cfb519929c4aad9d296f655c81d, type: 3}
   - {fileID: 8300000, guid: 60a0682fbc82bd244bdae3f3445cfd17, type: 3}
   - {fileID: 8300000, guid: b02661b1983843f4a8e25854215c13f1, type: 3}
+  enabled: 1
+  stayStationary: 0
+  orbitMode: 1
+  startFirstShootingAfterNSeconds: 4
+  minShootInterval: 0.5
+  maxShootInterval: 3
+  minProjectileSpeed: 6
+  maxProjectileSpeed: 15
+  minLaserYDirectionOffset: -0.05
+  maxLaserYDirectionOffset: 0.05
+  minStationaryTime: 0.5
+  maxStationaryTime: 3
+  minDistanceToTriggerTarget: 0.2
+  moveForce: 5
+  distanceFromPlayer: 5
+  droneHeightOffset: 0.5
+  verticalRange: 1
+  directionSwitchInterval: 3
+  minOrbitAngleDistance: 5
+  maxOrbitAngleDistance: 60
+  arcWidth: 50
   laserShotAudioSource: {fileID: 9037547902325623866}
   engineAudioSource: {fileID: 5680213957301999131}
   pitchMin: 1

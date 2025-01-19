@@ -21,12 +21,14 @@ public class Projectile : MonoBehaviour
     public List<AudioClip> laserDeflectionSFX;
 
     private Rigidbody rb;
+    private Collider coll;
     private Vector3 currentVelocity = Vector3.zero;
     private bool applyFinalVelocity = false;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        coll = GetComponent<Collider>();
     }
 
     private void Update()
@@ -75,6 +77,11 @@ public class Projectile : MonoBehaviour
         this.target = target;
         ChangeTarget(target);
 
+        //transform.LookAt(newTarget.transform.position, Vector3.up);
+        transform.rotation = Quaternion.LookRotation(velocity.normalized);
+        transform.rotation *= Quaternion.Euler(rotationOffset.x, rotationOffset.y, rotationOffset.z);
+        Debug.DrawRay(transform.position, velocity, Color.yellow, 2);
+
         currentVelocity = velocity;
         rb.velocity = currentVelocity;
         Destroy(this.gameObject, 10f);
@@ -84,12 +91,6 @@ public class Projectile : MonoBehaviour
     public void ChangeTarget(GameObject newTarget)
     {
         target = newTarget;
-        if (newTarget != null)
-        {
-            // Make the object look at the target
-            transform.LookAt(newTarget.transform.position, Vector3.up);
-            transform.rotation *= Quaternion.Euler(rotationOffset.x, rotationOffset.y, rotationOffset.z);
-        }
     }
 
     public void SetReflected(Vector3 newVelocity, bool reflected)
@@ -124,6 +125,10 @@ public class Projectile : MonoBehaviour
 
     public void Reflect(Collision bladeCollision)
     {
+        LayerMask layersToIgnore = LayerMask.GetMask("Laser", "Player");
+        rb.excludeLayers = layersToIgnore;
+        coll.excludeLayers = layersToIgnore;
+
         GameManager.Instance().ProjectileParried();
         PlayRandomDeflectionSound(bladeCollision.collider.GetComponent<AudioSource>());
         InstantiateSpark(bladeCollision.GetContact(0));
@@ -159,7 +164,7 @@ public class Projectile : MonoBehaviour
 
     private void PlayRandomDeflectionSound(AudioSource deflectionAudioSource)
     {
-        deflectionAudioSource.pitch = Random.Range(0.9f, 1.2f);
+        deflectionAudioSource.pitch = Time.timeScale * Random.Range(0.9f, 1.2f);
         deflectionAudioSource.PlayOneShot(laserDeflectionSFX[Random.Range(0, laserDeflectionSFX.Count)]);
     }
 
@@ -193,7 +198,7 @@ public class Projectile : MonoBehaviour
     {
         GameObject bulletDecal = Instantiate(
             bulletHoleDecals[Random.Range(0, bulletHoleDecals.Count)],
-            contact.point,
+            contact.point + (Vector3.up/100f),
             Quaternion.LookRotation(contact.normal) // Align rotation to surface normal
         );
 

@@ -7,33 +7,42 @@ public class TrainingDrone : MonoBehaviour
     public Transform user; // The user (e.g., VR player or camera)
     public GameObject projectilePrefab; // The projectile to be fired
     public Transform projectileSpawnPoint; // Where the projectile spawns
+    public List<AudioClip> laserShotSFX;
+
+    [Header("Main Settings")]
     public bool enabled = true;
     public bool stayStationary = false;
     public bool orbitMode = true; // If true, the drone orbits; if false, moves within 180° arc
-
-    public float orbitDistance = 5f; // Distance to maintain from the user
-    public float moveForce = 10f; // Speed of the drone's movement
-    public float beginSlowDownDistance = 0.25f;
     public float startFirstShootingAfterNSeconds = 2f;
+
+    [Header("Shooting Settings")]
     public float minShootInterval = 0.1f; // Time between shots
     public float maxShootInterval = 2f; // Time between shots
     public float minProjectileSpeed = 5f; // Speed of the projectile
     public float maxProjectileSpeed = 12f; // Speed of the projectile
+    public float minLaserYDirectionOffset = -0.2f;
+    public float maxLaserYDirectionOffset = 0.1f;
 
-    public float arcWidth = 180f; // Width of the movement arc when not orbiting
-    public float droneHeightOffset = 1;
-    public float verticalRange = 2f; // Maximum up/down movement range
-    public float minDistanceToTriggerTarget = 0.2f;
+    [Header("Stationary Settings")]
     public float minStationaryTime = 1f; // Time to stay stationary after reaching a target
     public float maxStationaryTime = 3f; // Time to stay stationary after reaching a target
 
+    [Header("Flying Settings")]
+    public float minDistanceToTriggerTarget = 0.2f;
+    public float moveForce = 10f; // Speed of the drone's movement
+    public float distanceFromPlayer = 5f; // Distance to maintain from the user
+    public float droneHeightOffset = 1;
+    public float verticalRange = 2f; // Maximum up/down movement range
+    public float directionSwitchInterval = 2.5f; // Time interval between direction switches
+
+    [Header("Orbit Settings")]
     public float minOrbitAngleDistance = 5f; // Minimum angular distance between orbit targets
     public float maxOrbitAngleDistance = 45f; // Maximum angular distance between orbit targets
-    public float directionSwitchInterval = 2.5f; // Time interval between direction switches
-    public float timeSinceLastSwitch = 0f; // Keeps track of time since the last direction switch
-    private bool clockwise = true; // Keeps track of the current orbit direction
 
-    public List<AudioClip> laserShotSFX;
+    [Header("Arc Settings")]
+    public float arcWidth = 180f; // Width of the movement arc when not orbiting
+
+    [Header("Audio Settings")]
     public AudioSource laserShotAudioSource;
     public AudioSource engineAudioSource; // AudioSource for the drone's engine sound
     public float pitchMin = 0.8f; // Minimum pitch
@@ -44,14 +53,17 @@ public class TrainingDrone : MonoBehaviour
     private bool gracePeriodOver = false;
     private float initialShootingTimer = 0f;
     private Vector3 randomTargetPosition;
-    private Vector3 lastPosition;
     private Rigidbody rb;
     private float currentOrbitAngle = 180f; // Keeps track of the current orbit angle
     private bool reachedTarget = false;
 
+    private float timeSinceLastSwitch = 0f; // Keeps track of time since the last direction switch
+    private bool clockwise = true; // Keeps track of the current orbit direction
+
     private float initialMoveForce;
     private float initialMinShootInterval;
     private float initialMaxShootInterval;
+    private float initialPitch;
 
     private void Start()
     {
@@ -67,9 +79,10 @@ public class TrainingDrone : MonoBehaviour
         
         rb.useGravity = false;
 
-        EnableDrone(false);
-        GameManager.Instance().OnGameStart += () => EnableDrone(true);
-        GameManager.Instance().OnGameStop += () => EnableDrone(false);
+        initialPitch = laserShotAudioSource.pitch;
+
+        GameManager.Instance().OnGameStart += () => EnableDrone();
+        GameManager.Instance().OnGameStop += () => StopDrone();
 
         if (user == null)
         {
@@ -116,12 +129,24 @@ public class TrainingDrone : MonoBehaviour
             AdjustEnginePitch();
 
         }
+
+        laserShotAudioSource.pitch = Time.timeScale * initialPitch;
     }
 
-    public void EnableDrone(bool state)
+    public void EnableDrone()
     {
         InitDrone();
-        this.enabled = state;
+        this.enabled = true;
+    }
+
+    public void ShouldOrbit(bool shouldOrbit)
+    {
+        this.orbitMode = shouldOrbit;
+    }
+
+    public void StopDrone()
+    {
+        this.enabled = false;
     }
 
     public void EnableDisableDrone()
@@ -289,7 +314,7 @@ public class TrainingDrone : MonoBehaviour
         float radians = Mathf.Deg2Rad * currentOrbitAngle;
 
         // Generate the orbit position based on the new angle
-        Vector3 offset = new Vector3(Mathf.Cos(radians), 0, Mathf.Sin(radians)) * orbitDistance;
+        Vector3 offset = new Vector3(Mathf.Cos(radians), 0, Mathf.Sin(radians)) * distanceFromPlayer;
 
         // Apply vertical offset
         float verticalOffset = Random.Range(-verticalRange, verticalRange);
@@ -305,12 +330,16 @@ public class TrainingDrone : MonoBehaviour
         float randomAngle = Random.Range(-arcWidth / 2, arcWidth / 2); // Random angle within the arc
         float verticalOffset = Random.Range(-verticalRange, verticalRange); // Random vertical offset within the range
 
+        Debug.Log("Vertical Offset: " + verticalOffset + ", randomAngle: " + randomAngle);
+
+        // Ignore the y rotation of the forward vector, so the drone doesnt fly out of the building
+        Vector3 flatUserForward = new Vector3(user.forward.x, 0f, user.forward.z);
+
         // Calculate the direction based on the random angle
-        Vector3 direction = Quaternion.Euler(0, randomAngle, 0) * user.forward;
+        Vector3 direction = Quaternion.Euler(0, randomAngle, 0) * flatUserForward;
 
         // Set the target position with vertical offset at the desired distance
-        randomTargetPosition = (user.position + new Vector3(0, droneHeightOffset, 0)) + direction.normalized * orbitDistance;
-        randomTargetPosition.y += verticalOffset; // Apply the vertical offset
+        randomTargetPosition = (user.position + new Vector3(0, droneHeightOffset + verticalOffset, 0)) + (direction.normalized * distanceFromPlayer);
     }
 
     private void OnDrawGizmos()
@@ -328,6 +357,12 @@ public class TrainingDrone : MonoBehaviour
 
         if (user == null) return;
 
+        Gizmos.color = Color.red;
+        Vector3 flatUserForward = new Vector3(user.forward.x, 0f, user.forward.z);
+        Gizmos.DrawLine(user.transform.position, user.transform.position + flatUserForward);
+
+
+        Gizmos.color = Color.blue;
         // Rotate the Gizmos to always face the user
         Quaternion rotation = Quaternion.LookRotation(user.position - transform.position);
         Gizmos.matrix = Matrix4x4.TRS(transform.position, rotation, Vector3.one);
@@ -345,6 +380,7 @@ public class TrainingDrone : MonoBehaviour
         }
     }
 
+    /*
     private void ShootProjectile()
     {
         if (projectilePrefab == null || projectileSpawnPoint == null)
@@ -357,6 +393,38 @@ public class TrainingDrone : MonoBehaviour
         GameObject projectile = Instantiate(projectilePrefab, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
         projectile.SetActive(false);
         Vector3 velocity = projectileSpawnPoint.forward * Random.Range(minProjectileSpeed, maxProjectileSpeed);
+        
+        float randomUpDownVelocityOffset = Random.Range(-1.0f, 0f);
+        velocity.y = randomUpDownVelocityOffset;
+
+        projectile.GetComponent<Projectile>().ShootProjectile(this.gameObject, user.gameObject, velocity);
+
+        PlayRandomLaserSound();
+    }
+    */
+
+    private void ShootProjectile()
+    {
+        if (projectilePrefab == null || projectileSpawnPoint == null)
+        {
+            Debug.LogError("ProjectilePrefab or ProjectileSpawnPoint is not assigned!");
+            return;
+        }
+
+        // Create the projectile
+        GameObject projectile = Instantiate(projectilePrefab, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
+        projectile.SetActive(false);
+
+        // Calculate velocity towards the target
+        Vector3 directionToTarget = (user.transform.position - projectileSpawnPoint.position).normalized;
+
+        // Randomize the Y component of the direction
+        float randomHeightAdjustment = Random.Range(minLaserYDirectionOffset, maxLaserYDirectionOffset);
+        directionToTarget.y += randomHeightAdjustment;
+
+        // Normalize the modified direction and scale by speed
+        Vector3 velocity = directionToTarget.normalized * Random.Range(minProjectileSpeed, maxProjectileSpeed);
+
         projectile.GetComponent<Projectile>().ShootProjectile(this.gameObject, user.gameObject, velocity);
 
         PlayRandomLaserSound();
@@ -376,7 +444,7 @@ public class TrainingDrone : MonoBehaviour
         float velocityMagnitude = rb.velocity.magnitude;
 
         // Map velocity to pitch range
-        float pitch = Mathf.Lerp(pitchMin, pitchMax, velocityMagnitude / moveForce);
+        float pitch = Mathf.Lerp(pitchMin, pitchMax, (velocityMagnitude / moveForce) * Time.timeScale);
         engineAudioSource.pitch = pitch;
     }
 }

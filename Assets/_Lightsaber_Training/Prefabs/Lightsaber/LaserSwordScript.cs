@@ -3,6 +3,7 @@
 // Refactored for efficiency
 
 using Oculus.Interaction;
+using System.Collections.Generic;
 using UnityEngine;
 using VolumetricLines;
 
@@ -12,6 +13,7 @@ namespace DigitalRuby.LaserSword
     {
         [Header("Blade Config")]
         [Tooltip("Blade color")]
+        public bool randomBladeColor = false;
         public Color BladeColor = Color.cyan;
 
         [Range(0.0f, 30.0f)]
@@ -74,6 +76,10 @@ namespace DigitalRuby.LaserSword
 
         private bool isGrabbed = false;
         private bool isActivated = false;
+
+        private float initialPitchRelfection;
+        private float initialPitchSwordHum;
+
         private ObjectGrabbedEventSender grabbedEventSender;
 
         private float bladeHeight;
@@ -84,6 +90,7 @@ namespace DigitalRuby.LaserSword
         private Material bladeMaterial;
         private float initialBladeScaleY, initialBladeLaserLineLength;
         private Rigidbody rb;
+        private Vector3 initialBladeLocalPosition;
 
         private void Awake()
         {
@@ -97,7 +104,12 @@ namespace DigitalRuby.LaserSword
                 grabbedEventSender.OnObjectReleased += OnReleased;
             }
 
+            initialBladeLocalPosition = BladeSwordMesh.transform.localPosition;
+
             rb = GetComponent<Rigidbody>();
+
+            initialPitchRelfection = AudioSource.pitch;
+            initialPitchSwordHum = AudioSourceLoop.pitch;   
 
             initialBladeScaleY = BladeSwordMesh.transform.localScale.y;
             // Cache the material for performance
@@ -120,12 +132,17 @@ namespace DigitalRuby.LaserSword
             // Blade is initially off; set scale to zero but don't modify the actual positions
             UpdateBladeScale(0f);
 
-            Light.color = BladeColor;
-            bladeMaterial.color = BladeColor;
-            bladeMaterial.SetColor("_Color", BladeColor);
-            BladeLaserScript.LineColor = BladeColor;
+            SetBladeColor(BladeColor);
             // UpdateLaserLength(0f);
 
+        }
+
+        private void SetBladeColor(Color bladedColor)
+        {
+            Light.color = bladedColor;
+            bladeMaterial.color = bladedColor;
+            bladeMaterial.SetColor("_Color", bladedColor);
+            BladeLaserScript.LineColor = bladedColor;
         }
 
         private void OnDestroy()
@@ -181,6 +198,15 @@ namespace DigitalRuby.LaserSword
             {
                 UpdateBladeState();
             }
+
+            if (BladeSwordMesh.transform.localPosition != initialBladeLocalPosition)
+                BladeSwordMesh.transform.localPosition = initialBladeLocalPosition;
+
+            if (BladeSwordMesh.transform.localRotation.eulerAngles != Vector3.zero)
+                BladeSwordMesh.transform.localRotation = Quaternion.Euler(Vector3.zero);
+
+            AudioSource.pitch = initialPitchRelfection * Time.timeScale;
+            AudioSourceLoop.pitch = initialPitchSwordHum * Time.timeScale;
         }
 
         private void UpdateBladeState()
@@ -239,6 +265,7 @@ namespace DigitalRuby.LaserSword
             state = value ? 3 : 2;
             bladeTime = 0f;
 
+
             // Create or destroy the temporary blade start
             if (temporaryBladeStart == null)
             {
@@ -251,6 +278,17 @@ namespace DigitalRuby.LaserSword
             AudioSource.PlayOneShot(value ? StartSound : StopSound);
             if (value)
             {
+                if (randomBladeColor)
+                {                                                                                                                              //Orange
+                    List<Color> bladeColors = new List<Color>() { BladeColor, Color.blue, Color.red, Color.green, Color.magenta, Color.yellow, new Color(0.8f, 0.5f, 0f)};
+                    Color randomColor = bladeColors[Random.Range(0, bladeColors.Count)];
+                    SetBladeColor(randomColor);
+                }
+                else
+                {
+                    SetBladeColor(BladeColor);
+                }
+
                 AudioSourceLoop.clip = ConstantSound;
                 AudioSourceLoop.Play();
             }

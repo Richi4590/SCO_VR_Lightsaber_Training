@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 128159213368683200}
   - component: {fileID: 6094706665570229356}
   - component: {fileID: 8558030087307523308}
+  - component: {fileID: 988263532767124177}
   m_Layer: 6
   m_Name: AR_LaserProjectileCapsule
   m_TagString: Laser
@@ -246,6 +247,8 @@ MonoBehaviour:
   rotationOffset: {x: 90, y: 0, z: 0}
   reflectionForceMultiplier: 2
   heatSeekingStrength: 3
+  destroyLaserAfterNSeconds: 5
+  destroyDecalsAfterNSeconds: 10
   sparksPrefabs:
   - {fileID: 4212237911574779972, guid: f34d53a9f8cd409428b8d1e3addf4807, type: 3}
   - {fileID: 1855340746554395461, guid: 49011e57640af4346b984abcfb1cf581, type: 3}
@@ -301,9 +304,26 @@ CapsuleCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
-  m_Radius: 0.03
-  m_Height: 0.2
+  m_Radius: 0.05
+  m_Height: 0.3
   m_Direction: 1
   m_Center: {x: 0, y: 0.105, z: 0}
+--- !u!114 &988263532767124177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4833666368865710318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a638c5271c8b1f47a96eae22341a41f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetTag: Player
+  activationRadius: 1
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 128

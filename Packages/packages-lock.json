@@ -12,27 +12,11 @@
       },
       "url": "https://packages.unity.com"
     },
-    "com.meta.xr.sdk.audio": {
-      "version": "71.0.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
     "com.meta.xr.sdk.core": {
       "version": "71.0.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
-    "com.meta.xr.sdk.haptics": {
-      "version": "71.0.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.meta.xr.sdk.core": "71.0.0"
-      },
       "url": "https://packages.unity.com"
     },
     "com.meta.xr.sdk.interaction": {

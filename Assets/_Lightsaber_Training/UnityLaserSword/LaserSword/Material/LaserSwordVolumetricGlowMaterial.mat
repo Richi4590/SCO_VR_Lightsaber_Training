@@ -29,18 +29,18 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CapsuleRadius: 0.5
+    - _CapsuleRadius: 1
     - _CapsuleRoundness: 0.5
-    - _GlowCenterFalloff: 0.668
-    - _GlowDither: 0.739
-    - _GlowFalloff: 4.19
-    - _GlowIntensity: 6.46
-    - _GlowInvFade: 2.07
-    - _GlowMax: 2.45
+    - _GlowCenterFalloff: 1
+    - _GlowDither: 0.342
+    - _GlowFalloff: 0.01
+    - _GlowIntensity: 10
+    - _GlowInvFade: 3
+    - _GlowMax: 3
     - _MaxGlow: 0.3
     m_Colors:
-    - _CapsuleEnd: {r: -0.0923495, g: 2.6293092, b: -1.6462562, a: 0}
-    - _CapsuleStart: {r: 0.016939849, g: 3.0679965, b: 0.30197603, a: 0}
+    - _CapsuleEnd: {r: -0.0923495, g: 38.88, b: -1.6462562, a: 0}
+    - _CapsuleStart: {r: 0.016939849, g: 0, b: 0.30197603, a: 0}
     - _Color: {r: 1, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

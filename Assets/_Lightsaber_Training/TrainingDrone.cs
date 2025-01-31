@@ -1,4 +1,3 @@
-using Oculus.Interaction;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -152,6 +151,11 @@ public class TrainingDrone : MonoBehaviour
     public void EnableDisableDrone()
     {
         this.enabled = !this.enabled;
+
+        if (this.enabled)
+            EnableDrone();
+        else
+            StopDrone();
     }
 
     public void SetToChaoticDroneMode() 
@@ -342,32 +346,6 @@ public class TrainingDrone : MonoBehaviour
         randomTargetPosition = (user.position + new Vector3(0, droneHeightOffset + verticalOffset, 0)) + (direction.normalized * distanceFromPlayer);
     }
 
-    private void OnDrawGizmos()
-    {
-        if (randomTargetPosition != null)
-        {
-            // Draw a sphere at the target position
-            Gizmos.color = Color.red;
-            Gizmos.DrawSphere(randomTargetPosition, 0.01f); // Draw a small sphere at the target position
-
-            // Draw a line from the drone to the target
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(transform.position, randomTargetPosition);
-        }
-
-        if (user == null) return;
-
-        Gizmos.color = Color.red;
-        Vector3 flatUserForward = new Vector3(user.forward.x, 0f, user.forward.z);
-        Gizmos.DrawLine(user.transform.position, user.transform.position + flatUserForward);
-
-
-        Gizmos.color = Color.blue;
-        // Rotate the Gizmos to always face the user
-        Quaternion rotation = Quaternion.LookRotation(user.position - transform.position);
-        Gizmos.matrix = Matrix4x4.TRS(transform.position, rotation, Vector3.one);
-    }
-
     private void HandleShooting()
     {
         if (gracePeriodOver)
@@ -447,4 +425,25 @@ public class TrainingDrone : MonoBehaviour
         float pitch = Mathf.Lerp(pitchMin, pitchMax, (velocityMagnitude / moveForce) * Time.timeScale);
         engineAudioSource.pitch = pitch;
     }
+
+    private void OnDrawGizmos()
+    {
+        if (randomTargetPosition != null)
+        {
+            // Draw a sphere at the target position
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(randomTargetPosition, 0.01f); // Draw a small sphere at the target position
+
+            // Draw a line from the drone to the target
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(transform.position, randomTargetPosition);
+        }
+
+        if (user == null) return;
+
+        Gizmos.color = Color.red;
+        Vector3 flatUserForward = new Vector3(user.forward.x, 0f, user.forward.z);
+        Gizmos.DrawLine(user.transform.position, user.transform.position + flatUserForward);
+    }
+
 }

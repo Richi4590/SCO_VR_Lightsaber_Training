@@ -15,14 +15,14 @@ public class UpdateTextEvents : MonoBehaviour
     {
         GameManager.Instance().OnDroneActivation += OnDroneActivationChanged;
         GameManager.Instance().OnParriedShot += OnParriedShot;
-        GameManager.Instance().OnLifesLeft += OnLifesLeftChanged;
+        GameManager.Instance().OnLifeLost += OnLifesLeftChanged;
     }
 
     private void OnDestroy()
     {
         GameManager.Instance().OnDroneActivation -= OnDroneActivationChanged;
         GameManager.Instance().OnParriedShot -= OnParriedShot;
-        GameManager.Instance().OnLifesLeft -= OnLifesLeftChanged;
+        GameManager.Instance().OnLifeLost -= OnLifesLeftChanged;
     }
 
     private void OnDroneActivationChanged(bool droneStatus)

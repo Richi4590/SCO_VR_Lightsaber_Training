@@ -16,10 +16,6 @@ namespace DigitalRuby.LaserSword
         public bool randomBladeColor = false;
         public Color BladeColor = Color.cyan;
 
-        [Range(0.0f, 30.0f)]
-        [Tooltip("Blade intensity")]
-        public float BladeIntensity = 1.0f;
-
         [Header("Audio")]
         [Tooltip("Sound to play when the laser sword turns on")]
         public AudioClip StartSound;
@@ -38,9 +34,6 @@ namespace DigitalRuby.LaserSword
         [Header("Assignments")]
         [Tooltip("Root game object.")]
         public GameObject Root;
-
-        [Tooltip("Hilt game object.")]
-        public GameObject Hilt;
 
         [Tooltip("Blade sword renderer.")]
         public MeshRenderer BladeSwordRenderer;
@@ -69,11 +62,12 @@ namespace DigitalRuby.LaserSword
         [Tooltip("DistanceHandGrabGameObject")]
         public GameObject OVRDistanceHandGrabGameObject;
 
-        public float initialBladeLightIntensity = 100f;
+        public float initialBladeLightIntensity = 1f;
 
         public OVRInput.Button activationButton = OVRInput.Button.Two; // Button to activate/deactivate (X Button)
         public bool turnOn = false;
 
+        private bool _turnOn;
         private bool isGrabbed = false;
         private bool isActivated = false;
 
@@ -92,8 +86,30 @@ namespace DigitalRuby.LaserSword
         private Rigidbody rb;
         private Vector3 initialBladeLocalPosition;
 
+        //Only used during the Editor to react to turnOn changes for debugging purposes!
+        private void OnValidate()
+        {
+            if (_turnOn != turnOn)
+            {
+                _turnOn = turnOn;
+
+                if (turnOn && !isActivated)
+                {
+                    GameManager.Instance().StartGame();
+                    Activate();
+                }
+
+                if (!turnOn && isActivated)
+                {
+                    Deactivate();
+                }
+            }
+        }
+
         private void Awake()
         {
+            _turnOn = turnOn;
+
             // Get the DistanceGrabInteractable component
             grabbedEventSender = OVRDistanceHandGrabGameObject.GetComponent<ObjectGrabbedEventSender>();
 
@@ -147,14 +163,12 @@ namespace DigitalRuby.LaserSword
 
         private void OnDestroy()
         {
-            /*
-            if (distanceGrabInteractable != null)
+            if (grabbedEventSender != null)
             {
-                // Unsubscribe from events
-                distanceGrabInteractable.WhenSelectInteractor -= OnGrabbed;
-                distanceGrabInteractable.WhenUnselectInteractor -= OnReleased;
+                // Subscribe to grab (select) and release (unselect) events
+                grabbedEventSender.OnObjectGrabbed -= OnGrabbed;
+                grabbedEventSender.OnObjectReleased -= OnReleased;
             }
-            */
         }
 
         private void OnGrabbed(GameObject source)
@@ -176,22 +190,11 @@ namespace DigitalRuby.LaserSword
 
         private void Update()
         {
-            if (turnOn && !isActivated)
-            {
-                GameManager.Instance().StartGame();
-                Activate();
-            }
-
-            if (!turnOn && isActivated)
-            {
-                Deactivate();
-            }
-
             // Check if the handle is grabbed and the activation button is pressed
             if (isGrabbed && OVRInput.GetDown(activationButton))
             {
                 SetActive(!isActivated);
-                Debug.Log("activated: " + !isActivated);
+                Debug.Log("activated: " + isActivated);
             }
 
             if (state == 2 || state == 3)
@@ -255,9 +258,11 @@ namespace DigitalRuby.LaserSword
 
         public bool TurnOn(bool value)
         {
+            isActivated = value;
+
             if (state == 2 || state == 3 || (state == 1 && value) || (state == 0 && !value))
             {
-                isActivated = value;
+                state = value ? 3 : 2; 
                 return false; // Invalid state change
             }
 
@@ -280,7 +285,7 @@ namespace DigitalRuby.LaserSword
             {
                 if (randomBladeColor)
                 {                                                                                                                              //Orange
-                    List<Color> bladeColors = new List<Color>() { BladeColor, Color.blue, Color.red, Color.green, Color.magenta, Color.yellow, new Color(0.8f, 0.5f, 0f)};
+                    List<Color> bladeColors = new List<Color>() { Color.cyan, Color.blue, Color.red, Color.green, Color.magenta, Color.yellow, new Color(0.8f, 0.5f, 0f)};
                     Color randomColor = bladeColors[Random.Range(0, bladeColors.Count)];
                     SetBladeColor(randomColor);
                 }
@@ -297,8 +302,7 @@ namespace DigitalRuby.LaserSword
                 AudioSourceLoop.Stop();
             }
 
-            isActivated = true;
-            return true;
+            return value;
         }
 
         public void Activate() => TurnOn(true);

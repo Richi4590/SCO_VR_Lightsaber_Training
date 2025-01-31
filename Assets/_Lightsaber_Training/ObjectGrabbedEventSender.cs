@@ -1,16 +1,13 @@
 using Oculus.Interaction;
+using System;
 using UnityEngine;
 
 public class ObjectGrabbedEventSender : MonoBehaviour
 {
-    public delegate void ObjectGrabbed(GameObject source);
-    public event ObjectGrabbed OnObjectGrabbed;
-    public delegate void ObjectMoved(GameObject source);
-    public event ObjectMoved OnObjectMoved;
-    public delegate void ObjectReleased(GameObject source);
-    public event ObjectReleased OnObjectReleased;
+    public event Action<GameObject> OnObjectGrabbed;
+    public event Action<GameObject> OnObjectMoved;
+    public event Action<GameObject> OnObjectReleased;
 
-    public Rigidbody _rigidbody;
     private Grabbable _grabbable;
 
     private void Awake()
@@ -40,21 +37,14 @@ public class ObjectGrabbedEventSender : MonoBehaviour
         switch (pointerEvent.Type)
         {
             case PointerEventType.Select:
-                HandleGrab();
+                OnObjectGrabbed?.Invoke(gameObject);
+                break;
+            case PointerEventType.Move:
+                OnObjectMoved?.Invoke(gameObject);
                 break;
             case PointerEventType.Unselect:
-                HandleRelease();
+                OnObjectReleased?.Invoke(gameObject);
                 break;
         }
-    }
-
-    private void HandleGrab()
-    {
-        OnObjectGrabbed?.Invoke(gameObject);
-    }
-
-    private void HandleRelease()
-    {
-        OnObjectReleased?.Invoke(gameObject);
     }
 }

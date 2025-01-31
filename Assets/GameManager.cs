@@ -17,7 +17,7 @@ public class GameManager : MonoBehaviour
 
     public event Action<bool> OnDroneActivation;
     public event Action<int> OnParriedShot;
-    public event Action<int> OnLifesLeft;
+    public event Action<int> OnLifeLost;
 
     private static GameManager instance;
     private int lifes = 3;
@@ -66,6 +66,8 @@ public class GameManager : MonoBehaviour
         OnGameStop.Invoke();
     }
 
+    public bool GameStarted() => gameStarted;
+
     public void ProjectileParried()
     {
         parriedShots++;
@@ -75,13 +77,12 @@ public class GameManager : MonoBehaviour
     public void PlayerHit()
     {
         lifes--;
-        OnLifesLeft.Invoke(lifes);
+        OnLifeLost.Invoke(lifes);
 
         if (lifes <= 0) 
             StopGame();
     }
 
-    public bool GameStarted() => gameStarted;
 
     private void _OnGameStart()
     {
@@ -93,7 +94,7 @@ public class GameManager : MonoBehaviour
 
         OnDroneActivation.Invoke(true);
         OnParriedShot.Invoke(parriedShots);
-        OnLifesLeft.Invoke(lifes);
+        OnLifeLost.Invoke(lifes);
     }
 
     private void _OnGameStop()

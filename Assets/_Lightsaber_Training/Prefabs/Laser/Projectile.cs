@@ -6,24 +6,28 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-    public GameObject shooter = null;
-    public GameObject target = null;
+    public GameObject shooter = null; //  The object that fired the projectile (e.g., a player or enemy)
+    public GameObject target = null; // The object the projectile should follow (if heat-seeking is enabled).
 
-    public bool heatSeeking = false;
-    public bool reflected = false;
-    public bool debugRotation = false;
-    public Vector3 rotationOffset = new Vector3(90, 0, 0);
+    public bool heatSeeking = false; // Toggles the heat-seeking behavior. When `true`, the projectile adjusts its trajectory toward the target.
+    public bool reflected = false; // Indicates whether the projectile has been reflected (e.g., by a lightsaber).
+    public bool debugRotation = false; //  Enables debugging by allowing manual adjustment of the projectile's rotation during runtime.
+
+    public Vector3 rotationOffset = new Vector3(90, 0, 0); //  A rotation offset applied to the projectile's orientation for customization (e.g., aligning with models).
     public float reflectionForceMultiplier = 1.0f; // Multiplier for reflected laser speed
-    public float heatSeekingStrength = 1.0f; // Strength of the seeking behavior
+    public float heatSeekingStrength = 1.0f; // Determines how strongly the projectile follows the target. Higher values make the trajectory sharper.
+    public float destroyLaserAfterNSeconds = 10f;
+    public float destroyDecalsAfterNSeconds = 10f;
 
-    public List<GameObject> sparksPrefabs;
-    public List<GameObject> bulletHoleDecals;
-    public List<AudioClip> laserDeflectionSFX;
+    public List<GameObject> sparksPrefabs; // A list of spark effects to instantiate upon collision.
+    public List<GameObject> bulletHoleDecals; // A list of decals (e.g., bullet holes) to apply to surfaces on impact.
+    public List<AudioClip> laserDeflectionSFX; // A list of sound effects for when the projectile is deflected.
 
     private Rigidbody rb;
     private Collider coll;
-    private Vector3 currentVelocity = Vector3.zero;
-    private bool applyFinalVelocity = false;
+    private Vector3 currentVelocity = Vector3.zero; // Stores the projectile's current velocity for heat-seeking and reflection calculations.
+    private bool applyFinalVelocity = false; // A flag to apply the reflected velocity in the next physics update.
+
 
     private void Awake()
     {
@@ -74,7 +78,6 @@ public class Projectile : MonoBehaviour
     public void ShootProjectile(GameObject shooter, GameObject target, Vector3 velocity)
     {
         this.shooter = shooter;
-        this.target = target;
         ChangeTarget(target);
 
         //transform.LookAt(newTarget.transform.position, Vector3.up);
@@ -84,7 +87,7 @@ public class Projectile : MonoBehaviour
 
         currentVelocity = velocity;
         rb.velocity = currentVelocity;
-        Destroy(this.gameObject, 10f);
+        Destroy(this.gameObject, destroyLaserAfterNSeconds);
         gameObject.SetActive(true);
     }
 
@@ -102,8 +105,6 @@ public class Projectile : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        //Debug.Log(collision.collider.transform.tag);
-
         if (collision.collider.transform.tag != "Lightsaber")
         {
             if (collision.collider.transform.tag != "Player")
@@ -120,7 +121,6 @@ public class Projectile : MonoBehaviour
 
         //Lightsaber Blade Hit!
         Reflect(collision);
-
     }
 
     public void Reflect(Collision bladeCollision)
@@ -205,6 +205,6 @@ public class Projectile : MonoBehaviour
         //Debug.DrawRay(contact.point, contact.normal, Color.red, 5f);
         //Debug.Log($"Contact Point: {contact.point}, Normal: {contact.normal}");
 
-        Destroy(bulletDecal, 10);
+        Destroy(bulletDecal, destroyDecalsAfterNSeconds);
     }
 }

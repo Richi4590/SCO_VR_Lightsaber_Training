@@ -1,7 +1,7 @@
 This is a small simple XR Lightsaber Parrying Mini-Game I made during my Master's Degree of Interactive Media in 2025.
 
 - Laser's can only be parried and not reflected back to something!
-- You have three lives when pressing a coloured button
+- You have three lives when pressing a colored button
 
 Button color overviews:
 - Red: 360° drone movement, normal drone shooting and travel speed
@@ -10,7 +10,7 @@ Button color overviews:
   
 - You can change environment by pressing the white button on the pedestal!
 - Requires an Oculus Quest 3 for XR!
-- Quest 2 should work only with VR!
+- Quest 2 was not tested but should work in VR!
 
 # Oculus Setup and Unity Integration Guide
 

@@ -12,6 +12,8 @@ Button color overviews:
 - Requires an Oculus Quest 3 for XR!
 - Quest 2 was not tested but should work in VR!
 
+At the bottom of this README you can see two gameplay videos of the game!
+
 # Oculus Setup and Unity Integration Guide
 
 ## Download the Oculus Software
